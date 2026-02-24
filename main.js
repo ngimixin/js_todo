@@ -1,5 +1,5 @@
 /**
- * Vanilla JS ToDo List - Create（新規追加）& Read（一覧表示・統計）
+ * Vanilla JS ToDo List - Create & Read & Update
  *
  * 仕様:
  * [Create]
@@ -9,10 +9,15 @@
  * - 掃除（編集）(削除)のように表示される
  * - チェックボックスでタスクの完了と未完了がわかる
  * - 全てのタスク：3 完了済み：2 未完了：1 のようにタスクの数を表示
- * - チェック・削除・新規作成でタスクの数はリアルタイムで変わる（※トグル・削除の動作は次ステップで実装）
+ * - チェック・削除・新規作成でタスクの数はリアルタイムで変わる（※削除の動作は Step 4 で実装）
+ *
+ * [Update]
+ * - 編集ボタンを押すと文字がフォームに変わってその場で編集できる
+ * - [掃除](保存)と表示され保存すると文字に戻る
+ * - チェックボックスでタスクの完了/未完了を切り替え
  */
 
-// データ: { id, text, completed }
+// データ: { id, text, completed, editing }
 let todos = [];
 
 // DOM要素
@@ -42,6 +47,7 @@ function loadFromStorage() {
         id: t.id,
         text: t.text,
         completed: Boolean(t.completed),
+        editing: false,
       }));
     }
   } catch (e) {
@@ -65,7 +71,7 @@ function updateStats() {
   incompleteCountEl.textContent = incomplete;
 }
 
-// 一覧を描画（Read用：編集・削除ボタン付き、チェックボックス表示）
+// 一覧を描画
 function render() {
   todoList.innerHTML = "";
 
@@ -73,14 +79,27 @@ function render() {
     const li = document.createElement("li");
     li.className = "todo-item" + (todo.completed ? " completed" : "");
     li.dataset.id = todo.id;
-    li.innerHTML = `
-      <input type="checkbox" ${todo.completed ? "checked" : ""} data-action="toggle">
-      <span class="todo-text">${escapeHtml(todo.text)}</span>
-      <div class="todo-actions">
-        <button type="button" class="edit-btn" data-action="edit">編集</button>
-        <button type="button" class="delete-btn" data-action="delete">削除</button>
-      </div>
-    `;
+
+    if (todo.editing) {
+      li.classList.add("editing");
+      li.innerHTML = `
+        <input type="checkbox" ${todo.completed ? "checked" : ""} data-action="toggle">
+        <form class="edit-form">
+          <input type="text" value="${escapeHtml(todo.text)}" class="edit-input">
+          <button type="submit" class="save-edit-btn">保存</button>
+        </form>
+      `;
+    } else {
+      li.innerHTML = `
+        <input type="checkbox" ${todo.completed ? "checked" : ""} data-action="toggle">
+        <span class="todo-text">${escapeHtml(todo.text)}</span>
+        <div class="todo-actions">
+          <button type="button" class="edit-btn" data-action="edit">編集</button>
+          <button type="button" class="delete-btn" data-action="delete">削除</button>
+        </div>
+      `;
+    }
+
     todoList.appendChild(li);
   });
 
@@ -104,6 +123,7 @@ function addTodo(text) {
     id,
     text: trimmed,
     completed: false,
+    editing: false,
   });
 
   saveToStorage();
@@ -112,7 +132,47 @@ function addTodo(text) {
   todoInput.focus();
 }
 
-// イベント委譲で一覧のクリックを処理（Read時点ではトグル・編集・削除は未実装）
+// Update: 完了/未完了切り替え
+function toggleTodo(id) {
+  const todo = todos.find((t) => t.id === id);
+  if (todo) {
+    todo.completed = !todo.completed;
+    saveToStorage();
+    render();
+  }
+}
+
+// Update: 編集モード開始
+function startEdit(id) {
+  todos.forEach((t) => {
+    t.editing = t.id === id;
+  });
+  saveToStorage();
+  render();
+
+  const li = todoList.querySelector(`[data-id="${id}"]`);
+  if (li) {
+    const input = li.querySelector(".edit-input");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }
+}
+
+// Update: 編集保存
+function saveEdit(id, newText) {
+  const trimmed = newText.trim();
+  const todo = todos.find((t) => t.id === id);
+  if (todo) {
+    todo.text = trimmed || todo.text;
+    todo.editing = false;
+    saveToStorage();
+    render();
+  }
+}
+
+// イベント委譲で一覧のクリックを処理
 function handleTodoListClick(e) {
   const target = e.target.closest("[data-action]");
   if (!target) return;
@@ -120,13 +180,16 @@ function handleTodoListClick(e) {
   const li = target.closest(".todo-item");
   if (!li) return;
 
+  const id = li.dataset.id;
   const action = target.dataset.action;
 
-  // Step 3, 4 で実装予定（クリックは無効化してデータ不整合を防ぐ）
-  if (action === "toggle" || action === "edit" || action === "delete") {
-    // 現時点ではトグル・編集・削除は未実装なので、クリックは無効化してデータ不整合を防ぐ
-    e.preventDefault();
-    return;
+  switch (action) {
+    case "toggle":
+      toggleTodo(id);
+      break;
+    case "edit":
+      startEdit(id);
+      break;
   }
 }
 
@@ -146,6 +209,17 @@ function bindEvents() {
 
   // 一覧のクリック（イベント委譲）
   todoList.addEventListener("click", handleTodoListClick);
+
+  // 編集フォームの送信（保存ボタンクリック or Enter キー）
+  todoList.addEventListener("submit", (e) => {
+    const form = e.target.closest("form.edit-form");
+    if (!form) return;
+    e.preventDefault();
+    const li = form.closest(".todo-item");
+    const id = li?.dataset.id;
+    const input = form.querySelector(".edit-input");
+    if (id && input) saveEdit(id, input.value);
+  });
 }
 
 init();
