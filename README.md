@@ -8,6 +8,14 @@ GitHub Pages で公開しています。
 
 https://ngimixin.github.io/js_todo/
 
+## Screenshot
+
+### トップ画面
+![js_todo screenshot](./screenshot.png)
+
+### 削除確認モーダル
+![js_todo modal screenshot](./screenshot-modal.png)
+
 ## Usage
 
 - リポジトリをクローンし、`index.html` をブラウザで開いてください。
