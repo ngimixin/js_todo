@@ -1,0 +1,265 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #e8e4df;
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+  margin-top: 0;
+  color: #333;
+  text-align: center;
+}
+
+.add-todo {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+#todo-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+}
+
+#todo-input:focus {
+  border-color: #2c5f4f;
+}
+
+#save-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: #2c5f4f;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#save-btn:hover {
+  background: #234a3e;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.stats strong {
+  color: #333;
+}
+
+#todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.todo-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 1rem;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.todo-actions button {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.todo-actions button:hover {
+  opacity: 0.8;
+}
+
+.edit-btn {
+  background: #ffc107;
+  color: #333;
+}
+
+.delete-btn {
+  background: #f44336;
+  color: white;
+}
+
+.save-edit-btn {
+  background: #4caf50;
+  color: white;
+}
+
+/* 編集モード: テキストがフォームに変わる */
+.todo-item.editing .todo-text {
+  display: none;
+}
+
+.todo-item.editing {
+  flex-wrap: wrap;
+}
+
+.todo-item.editing .edit-form {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.edit-form {
+  display: none;
+}
+
+.edit-form input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid #2c5f4f;
+  border-radius: 6px;
+  outline: none;
+}
+
+/* 削除確認モーダル */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.is-open {
+  display: flex;
+}
+
+.modal-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 320px;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-message {
+  margin: 0 0 1.5rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modal-btn:hover {
+  opacity: 0.9;
+}
+
+.modal-btn:active {
+  transform: scale(0.98);
+}
+
+.modal-cancel {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.modal-confirm {
+  background: #f44336;
+  color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 編集入力が不正（空）だったときの見た目 */
+.edit-input.is-invalid {
+  border-color: #f44336;
+}
+
+/* 編集時のエラーメッセージ */
+.edit-error {
+  flex-basis: 100%;
+  margin: 0.25rem 0 0;
+  padding-left: 28px; /* checkbox幅 + gap でインデント */
+  font-size: 0.85rem;
+  color: #f44336;
+}

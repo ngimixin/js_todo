@@ -1,5 +1,5 @@
 /**
- * Vanilla JS ToDo List - Create & Read & Update
+ * Vanilla JS ToDo List - Create & Read & Update & Delete
  *
  * 仕様:
  * [Create]
@@ -9,12 +9,18 @@
  * - 掃除（編集）(削除)のように表示される
  * - チェックボックスでタスクの完了と未完了がわかる
  * - 全てのタスク：3 完了済み：2 未完了：1 のようにタスクの数を表示
- * - チェック・削除・新規作成でタスクの数はリアルタイムで変わる（※削除の動作は Step 4 で実装）
+ * - チェック・削除・新規作成でタスクの数はリアルタイムで変わる
  *
  * [Update]
  * - 編集ボタンを押すと文字がフォームに変わってその場で編集できる
  * - [掃除](保存)と表示され保存すると文字に戻る
+ * - 空白で保存しようとすると「1文字以上入力して下さい」とエラー表示（入力し直すと消える）
+ * - 編集中にESCでキャンセルすると変更を破棄して文字に戻る
  * - チェックボックスでタスクの完了/未完了を切り替え
+ *
+ * [Delete]
+ * - 削除ボタンを押すと「本当によろしいですか？」と表示されOKを押すと削除できる
+ * - カスタムモーダルで確認（Escapeでキャンセル、Enterで削除実行）
  */
 
 // データ: { id, text, completed, editing }
@@ -27,6 +33,7 @@ const todoList = document.getElementById("todo-list");
 const totalCountEl = document.getElementById("total-count");
 const completedCountEl = document.getElementById("completed-count");
 const incompleteCountEl = document.getElementById("incomplete-count");
+const deleteModal = document.getElementById("delete-modal");
 
 const STORAGE_KEY = "js_todo_todos";
 
@@ -163,13 +170,96 @@ function startEdit(id) {
 // Update: 編集保存
 function saveEdit(id, newText) {
   const trimmed = newText.trim();
+  // if (!trimmed) return; // 空白の場合は何もしない
+  const todo = todos.find((t) => t.id === id);
+  if (!todo) return;
+
+  const li = todoList.querySelector(`[data-id="${id}"]`);
+  const input = li?.querySelector(".edit-input");
+  const error = li?.querySelector(".edit-error");
+
+  // 空白の場合はエラーメッセージを表示
+  if (!trimmed) {
+    input?.classList.add("is-invalid");
+
+    if (li && !error) {
+      const p = document.createElement("p");
+      p.className = "edit-error";
+      p.textContent = "1文字以上入力して下さい";
+      li.appendChild(p);
+    }
+
+    input?.focus();
+    return;
+  }
+
+  // 正常な入力の場合はタスクを更新
+  todo.text = trimmed;
+  todo.editing = false;
+  saveToStorage();
+  render();
+}
+
+// Update: 編集キャンセル（ESC で変更を破棄）
+function cancelEdit(id) {
   const todo = todos.find((t) => t.id === id);
   if (todo) {
-    todo.text = trimmed || todo.text;
     todo.editing = false;
     saveToStorage();
     render();
   }
+}
+
+// Delete: 削除（カスタムモーダルで確認）
+function deleteTodo(id) {
+  showDeleteModal((confirmed) => {
+    if (!confirmed) return;
+
+    todos = todos.filter((t) => t.id !== id);
+    saveToStorage();
+    render();
+  });
+}
+
+// 削除確認モーダルを表示（コールバックで結果を返す）
+function showDeleteModal(callback) {
+  deleteModal.classList.add("is-open");
+  deleteModal.setAttribute("aria-hidden", "false");
+
+  function close(result) {
+    deleteModal.classList.remove("is-open");
+    deleteModal.setAttribute("aria-hidden", "true");
+    deleteModal.removeEventListener("click", handleOverlayClick);
+    document.removeEventListener("keydown", handleKeydown);
+    deleteModal.querySelectorAll("[data-modal-action]").forEach((btn) => {
+      btn.removeEventListener("click", handleBtnClick);
+    });
+    callback(result);
+  }
+
+  function handleKeydown(e) {
+    if (e.key === "Escape") close(false);
+    if (e.key === "Enter") {
+      e.preventDefault();
+      close(true);
+    }
+  }
+
+  function handleBtnClick(e) {
+    const action = e.target.dataset.modalAction;
+    if (action === "confirm") close(true);
+    else if (action === "cancel") close(false);
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === deleteModal) close(false);
+  }
+
+  deleteModal.querySelectorAll("[data-modal-action]").forEach((btn) => {
+    btn.addEventListener("click", handleBtnClick);
+  });
+  deleteModal.addEventListener("click", handleOverlayClick);
+  document.addEventListener("keydown", handleKeydown);
 }
 
 // イベント委譲で一覧のクリックを処理
@@ -189,6 +279,9 @@ function handleTodoListClick(e) {
       break;
     case "edit":
       startEdit(id);
+      break;
+    case "delete":
+      deleteTodo(id);
       break;
   }
 }
@@ -219,6 +312,29 @@ function bindEvents() {
     const id = li?.dataset.id;
     const input = form.querySelector(".edit-input");
     if (id && input) saveEdit(id, input.value);
+  });
+
+  // 編集入力で ESC キーでキャンセル
+  todoList.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const input = e.target.closest(".edit-input");
+    if (!input) return;
+    const li = input.closest(".todo-item");
+    const id = li?.dataset.id;
+    if (id) {
+      e.preventDefault();
+      cancelEdit(id);
+    }
+  });
+
+  // 編集入力でタイプし始めたらエラー表示を消す
+  todoList.addEventListener("input", (e) => {
+    const input = e.target.closest(".edit-input");
+    if (!input) return;
+
+    input.classList.remove("is-invalid");
+    const li = input.closest(".todo-item");
+    li?.querySelector(".edit-error")?.remove();
   });
 }
 

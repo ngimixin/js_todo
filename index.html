@@ -32,6 +32,29 @@
       <ul id="todo-list"></ul>
     </div>
 
+    <!-- 削除確認モーダル -->
+    <div id="delete-modal" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog">
+        <p class="modal-message">本当によろしいですか？</p>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="modal-btn modal-cancel"
+            data-modal-action="cancel"
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            class="modal-btn modal-confirm"
+            data-modal-action="confirm"
+          >
+            削除
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="main.js"></script>
   </body>
 </html>
