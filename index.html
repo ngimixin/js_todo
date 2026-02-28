@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDo List</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>ToDo List</h1>
+
+      <!-- Create: 入力フィールドと保存ボタン -->
+      <div class="add-todo">
+        <input
+          type="text"
+          id="todo-input"
+          placeholder="タスクを入力..."
+          maxlength="100"
+        />
+        <button type="button" id="save-btn">保存</button>
+      </div>
+
+      <!-- タスク数表示 -->
+      <div class="stats">
+        <span>全てのタスク：<strong id="total-count">0</strong></span>
+        <span>完了済み：<strong id="completed-count">0</strong></span>
+        <span>未完了：<strong id="incomplete-count">0</strong></span>
+      </div>
+
+      <!-- Read: ToDo一覧 -->
+      <ul id="todo-list"></ul>
+    </div>
+
+    <!-- 削除確認モーダル -->
+    <div id="delete-modal" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog">
+        <p class="modal-message">本当によろしいですか？</p>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="modal-btn modal-cancel"
+            data-modal-action="cancel"
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            class="modal-btn modal-confirm"
+            data-modal-action="confirm"
+          >
+            削除
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
